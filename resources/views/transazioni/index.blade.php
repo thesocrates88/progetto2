@@ -23,7 +23,13 @@
                         <tr class="border-b">
                             <td>{{ $t->id_transazione }}</td>
                             <td>{{ $t->descrizione }}</td>
-                            <td>€ {{ number_format($t->importo, 2, ',', '.') }}</td>
+                            <td>
+                                @if($t->utente_id === Auth::id())
+                                    -€{{ number_format($t->importo, 2, ',', '.') }}
+                                @else
+                                    +€{{ number_format($t->importo, 2, ',', '.') }}
+                                @endif
+                            </td>
                             <td>{{ ucfirst($t->metodo) }}</td>
                             <td>{{ $t->esito }}</td>
                             <td>{{ $t->created_at->format('d/m/Y H:i') }}</td>

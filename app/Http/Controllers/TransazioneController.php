@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\Request;
 
@@ -36,6 +37,10 @@ class TransazioneController extends Controller
         $utenteId = auth()->id() ?? null;
         $contoSorgenteId = optional(optional(auth()->user())->conto)->id;
 
+        dd($contoSorgenteId);
+        dd(auth()->user()?->conto);
+
+
         $transazione = Transazione::create([
             'id_transazione' => $idTransazione,
             'importo' => $request->importo,
@@ -54,7 +59,16 @@ class TransazioneController extends Controller
 
     public function index()
     {
-        $transazioni = \App\Models\Transazione::where('utente_id', auth()->id())->latest()->get();
+        $user = Auth::user();
+
+        // Trova i conti dell'utente
+        $contiUtente = $user->conto()->pluck('id');
+
+        // Transazioni in cui l'utente è mittente o destinatario
+        $transazioni = Transazione::where('utente_id', $user->id)
+            ->orWhereIn('conto_destinazione_id', $contiUtente)
+            ->orderByDesc('created_at')
+            ->get();
 
         return view('transazioni.index', compact('transazioni'));
     }
@@ -63,16 +77,26 @@ class TransazioneController extends Controller
     {
         $transazione = Transazione::findOrFail($id);
 
+        if (!$transazione->conto_sorgente_id) {
+            $contoUtente = auth()->user()?->conto;
+            if ($contoUtente) {
+                $transazione->update(['conto_sorgente_id' => $contoUtente->id]);
+            } else {
+                return redirect()->route('dashboard')->with('error', 'Conto non disponibile per l’utente.');
+            }
+        }
+
         // Verifica che la transazione sia ancora in attesa
         if ($transazione->esito !== 'IN_ATTESA') {
             return redirect()->route('dashboard')->with('error', 'Transazione già conclusa.');
         }
 
-        // Simula l'esito positivo (puoi fare controlli reali più avanti)
+        // salva l'esito positivo
         $transazione->update([
             'esito' => 'OK',
             'data_conferma' => now(),
         ]);
+
 
         // Esegue chiamata all'URL di callback con esito
         Http::get($transazione->url_callback, [

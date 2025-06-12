@@ -31,7 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/transazioni', [TransazioneController::class, 'index'])->name('transazioni.index');
 
     //solo utente può autorizzare la transazione
-    Route::post('/transazione/{id}/autorizza', [TransazioneController::class, 'autorizza'])->name('transazione.autorizza');
+    Route::GET('/transazione/{id}/autorizza', [TransazioneController::class, 'autorizza'])->name('transazione.autorizza');
     //carte
     Route::resource('carte', CartaController::class)->only(['index', 'create', 'store', 'destroy']);
 

@@ -93,7 +93,26 @@ class CheckoutApiController extends Controller
         $tx->esito = 'OK';
         $tx->data_conferma = now();
         $tx->save();
+        
+        //scala soldi al pagatore e accredita al destinatario
+        if ($tx->metodo === 'conto') {
+            $contoSorgente = $tx->contoSorgente;
+            $contoDestinazione = $tx->contoDestinazione;
 
+            if ($contoSorgente) {
+                $contoSorgente->decrement('saldo', $tx->importo);
+            }
+
+            if ($contoDestinazione) {
+                $contoDestinazione->increment('saldo', $tx->importo);
+            }
+
+            Log::info('Saldi aggiornati', [
+                'sorgente_id' => $tx->conto_sorgente_id,
+                'destinazione_id' => $tx->conto_destinazione_id,
+                'importo' => $tx->importo,
+            ]);
+        }
         // === DEBUG PRIMA DELLA CHIAMATA ===
         Log::info('Invio callback a Progetto 1', [
             'url_callback' => $tx->url_callback,
