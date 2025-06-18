@@ -27,10 +27,10 @@
         <div class="mt-4">
             Credenziali: <br>
             Utente: utente1@example.com <br>
-            psw: password <br>
+            psw: password<br>
 
             Esercente: esercente1@example.com <br>
-            psw: password <br>
+            psw: password<br>
         </div>
 
         <!-- Remember Me -->
